@@ -77,3 +77,26 @@ class Timings:
                 for resource in resource_list:
                     resource_input_array.append((e1, e2, resource))
         return resource_input_array
+
+    def extract_imperative_resource_times(self,event_log):
+        '''
+        The difference between this unique way of extracting times is that it requires
+        the next event to be in sequence.
+        :param event_log:
+        :return:
+        '''
+        log = pm4py.convert_to_event_log(event_log)
+        times_dictionary = {}
+        for trace in log:
+            first = True
+            for next_event in trace:
+                if not first and next_event['concept:name'] != 'end' and event['concept:name'] != 'start':
+                    time = next_event['time:timestamp'] - event['time:timestamp']
+                    key = (event['concept:name'], next_event['concept:name'], next_event['org:role'])
+                    if not key in times_dictionary.keys():
+                        times_dictionary[key] = [time.total_seconds()]
+                    else:
+                        times_dictionary[key].append(time.total_seconds())
+                event = next_event
+                first = False
+        return times_dictionary

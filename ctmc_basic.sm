@@ -1,0 +1,33 @@
+ctmc
+
+module ctest
+	 //Middle : 0
+	 //End : 1
+	 //Start : 2
+
+
+	 q : [0 ..2];
+
+	 started : bool;
+
+	 [] !started -> 1 : (started'=true) & (q'=2);
+
+	 <> q = 2 -> 0.25 +  0 : (q' = 0) + true ;
+
+	 <> q = 0 -> 0.25 +  0 : (q' = 1) + true ;
+
+     <> q = 1 -> true;
+
+
+	
+
+endmodule
+
+label "q_terminal_End" = (q =1);
+
+rewards "num"
+	[] q = 0 : 1;
+	[] q = 1 : 0;
+	[] q = 2 : 1;
+	
+endrewards

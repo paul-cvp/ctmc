@@ -2,6 +2,7 @@ import json
 import copy
 
 def create_prism_program_from_log(
+        correspondence,
         final_states,
         data_mean_transition_role_time,
         data_role_number_of_resources,
@@ -9,125 +10,135 @@ def create_prism_program_from_log(
         data_role_trials,
         sm_file_path,
         show_print=False):
+    '''
+    :param correspondence: All the keys and unique ids numbered from 0 to len(correspondence)
+    :param final_states: everything labelled as q_terminal
+    :param data_mean_transition_role_time:
+    :param data_role_number_of_resources:
+    :param data_transition_role_frequency:
+    :param data_role_trials:
+    :param sm_file_path:
+    :param show_print:
+    :return:
+
+    None of the final states can be labelled as 0
+    '''
 
     file = open(sm_file_path, 'w')
 
     file.write('ctmc\n\n')
 
-    n = 0  # total number of states
-
-    for key in data_mean_transition_role_time:
-        n = n + 1
+    n = len(correspondence)-1  # total number of states
 
     file.write('const int N = ' + str(n) + ';\n')
 
     for key in data_role_trials:
-        file.write('const int ' + str(key) + ' = ' + str(data_role_trials[key]) + ';\n')
+        file.write('const double ' + str(key) + ' = ' + str(data_role_trials[key]) + ';\n')
 
     file.write('\n\n\nmodule ctest\n')
 
-    n = 0
-    correspondance = {}
-    events = set(data_mean_transition_role_time.keys()).union(*[set(k.keys()) for k in data_mean_transition_role_time.values()])
-
-    events = sorted(events.difference(set(['start', 'end'])))
-    for key in events:
-        correspondance[key] = n
-        n = n + 1
-
-    for key in correspondance:
-        file.write('\t //' + key + ' : ' + str(correspondance[key]) + '\n')
-
-    file.write('\n\n\t q : [0 ..N];')
-    file.write('\n\n\t started : bool;')
-
+    for key in correspondence:
+        file.write('\t //' + key + ' : ' + str(correspondence[key]) + '\n')
+    # constants are set
+    file.write('\n\n\t q : [0 ..N];') # list of states by numbers based on the correspondence
+    file.write('\n\n\t started : bool;') # variable that indicates if we have been initialized
+    # this only runs once
     file.write('\n\n\t [] !started -> ')
 
     started = {}
-
+    # this defines the start probabilities
     for key in data_transition_role_frequency["start"]:
         buffer = '('
         for role in data_transition_role_frequency["start"][key]:
             if role in data_role_number_of_resources:
-                buffer = buffer + str(data_transition_role_frequency["start"][key][role]) + ' / ' + str(data_role_number_of_resources[role]) + ' * ' + role + ' + '
-        buffer = buffer + '0)'
+                # for each role and frequency we apply the rule of 3 based on the desired role trials (regula de trei simpla)
+                # each rule of 3 is summed
+                buffer = buffer + str(data_transition_role_frequency["start"][key][role]) + ' / ' + str(data_role_number_of_resources[role]) + ' * ' + role + '+'
+        buffer = buffer[:-1] + ')'
 
         started[key] = copy.deepcopy(buffer)
 
+    # this creates the normalization so that we have probabilities in started
     buffer = ''
     for key in started:
-        buffer = buffer + started[key] + ' + '
+        buffer = buffer + started[key] + '+'
+    buffer = buffer[:-1]
 
-    buffer = buffer + '0'
-
+    buffer1 = ''
     for key in started:
         if key == 'start':
             continue
-        file.write(started[key] + ' / (' + buffer + ') : (started\'=true) & (q\'=' + str(correspondance[key]) + ')  + \n\t')
-    file.write('0 : true;\n\n\n')
+        # start probabilities divided by the normalization
+        buffer1 += started[key] + ' / (' + buffer + ') : (started\'=true) & (q\'=' + str(correspondence[key]) + ')+\n\t'
+    buffer1 = buffer1[:-3] + ';\n\n'
+    file.write(buffer1)
+    # now we are finished with started
 
     frequences_total = {}
-
-    frequences_local = {}
-
+    # frequences_local = {}
+    # here we make transition probabilities (we need it for the rule of three)
     for key in data_transition_role_frequency:
-        if key == 'start':
+        if key in ['start','end']:
             continue
-        if key == 'end':
-            continue
-        frequences_local[key] = {}
+        # frequences_local[key] = {}
         frequences_total[key] = {}
         n = 0
         for key_1 in data_transition_role_frequency[key]:
-            if key_1 == 'start':
+            if key_1 in ['start','end']:
                 continue
-            if key_1 == 'end':
-                continue
-            m = 0
+            # m = 0
             for role in data_transition_role_frequency[key][key_1]:
                 n = n + data_transition_role_frequency[key][key_1][role]
-                m = m + data_transition_role_frequency[key][key_1][role]
-            frequences_local[key][key_1] = m
+                # m = m + data_transition_role_frequency[key][key_1][role]
+            # this tells us that we moved from state key to key_1 m many times
+            # frequences_local[key][key_1] = m
+        # this tells us that we moved from state key to anywhere n many times
         frequences_total[key] = n
 
     if show_print:
-        print(frequences_local)
+        # print(frequences_local)
         print(frequences_total)
 
-    for key in correspondance:
+    for key in correspondence:
         if key in final_states:
-            file.write('\t <> q = ' + str(correspondance[key]) + ' -> true;\n\n')
+            file.write('\t <> q = ' + str(correspondence[key]) + ' -> true;\n\n')
             continue
-        file.write('\t <> q = ' + str(correspondance[key]) + ' -> ')
-
-        for key_1 in data_transition_role_frequency[key]:
-            if key_1 == 'end':
-                continue
-            for role in data_transition_role_frequency[key][key_1]:
-                if role == 'end':
+        # if q is this specific state -> -(then)->
+        if key in data_transition_role_frequency:
+            file.write('\t <> q = ' + str(correspondence[key]) + ' -> ')
+            for key_1 in data_transition_role_frequency[key]:
+                if key_1 == 'end':
                     continue
-                if role in data_mean_transition_role_time[key][key_1] and data_mean_transition_role_time[key][key_1][role] != 0:
-                    file.write('( ' + str(data_mean_transition_role_time[key][key_1][role]["lambda"]) + ' * ' + str(role) + '/' + str(data_role_number_of_resources[role]) + ') + ')
-                    # file.write(str(data_transition_role_frequency[key][key_1][role]) + '/' + str(frequences_local[key][key_1]) + ' * ( ' + str(
-                    #     data_mean_transition_role_time[key][key_1][role]["lambda"]) + ' * ' + str(role) + '/' + str(data_role_number_of_resources[role]) + ') + ')  # 1/ kai bgazo to kleidi
-                else:
-                    file.write('0 +')
-            file.write(' 0 : (q\' = ' + str(correspondance[key_1]) + ') + \n')
-        file.write(' true ;\n\n\t')
+                for role in data_transition_role_frequency[key][key_1]:
+                    if role == 'end':
+                        continue
+                    if (key in data_mean_transition_role_time and
+                        key_1 in data_mean_transition_role_time[key] and
+                        role in data_mean_transition_role_time[key][key_1] and
+                        data_mean_transition_role_time[key][key_1][role]["lambda"] != 0):
+                        # again the rule of three
+                        #TODO: rename lambda to rate
+                        file.write('( ' + str(data_mean_transition_role_time[key][key_1][role]["lambda"]) + ' * ' + str(role) + '/' + str(data_role_number_of_resources[role]) + ') + ')
+                    else:
+                        file.write('0 +')
+                file.write(' 0 : (q\' = ' + str(correspondence[key_1]) + ') + \n')
+            file.write(' true ;\n\n\t')
 
     file.write('\n\nendmodule\n\n')
+    # now we have set the transition probabilities
 
-    for key in correspondance:
+    # here we have the terminal states
+    for key in correspondence:
         if key in final_states:
-            file.write(f'label "q_terminal_{key}" = (q =' + str(correspondance[key]) + ');\n\n')
+            file.write(f'label "q_terminal_{key}" = (q =' + str(correspondence[key]) + ');\n\n')
 
     file.write('rewards "num"\n\t')
-
-    for key in correspondance:
+    # here we have the rewards
+    for key in correspondence:
         if key in final_states:
-            file.write('[] q = ' + str(correspondance[key]) + ' : 0;\n\t')
+            file.write('[] q = ' + str(correspondence[key]) + ' : 0;\n\t')
         else:
-            file.write('[] q = ' + str(correspondance[key]) + ' : 1;\n\t')
+            file.write('[] q = ' + str(correspondence[key]) + ' : 1;\n\t')
     file.write('\nendrewards')
 
     ###############################################################
@@ -139,27 +150,22 @@ def create_prism_program_from_log(
     ##############################################################
 
     final_probabilities = {}
-
+    # to compute the final probabilities you use the seen frequency / (weighted by all the times we leave a specific state) * current role trials / number of roles
     for key in data_transition_role_frequency:
-        if key == 'start':
-            continue
-        if key == 'end':
+        if key in ['start', 'end']:
             continue
         final_probabilities[key] = {}
         for key_1 in data_transition_role_frequency[key]:
-            if key_1 == 'start':
-                continue
-            if key_1 == 'end':
+            if key_1 in ['start', 'end']:
                 continue
             final_probabilities[key][key_1] = 0
             for role in data_transition_role_frequency[key][key_1]:
-                if role == 'start':
+                if role in ['start', 'end']:
                     continue
-                if role == 'end':
-                    continue
+                # again the rule of 3
                 final_probabilities[key][key_1] = final_probabilities[key][key_1] + (data_transition_role_frequency[key][key_1][role] / frequences_total[key]) * (
                             data_role_trials[role] / data_role_number_of_resources[role])
-
+    # normalization to make it a probability
     for key in final_probabilities:
         total = 0
         for key_1 in final_probabilities[key]:
