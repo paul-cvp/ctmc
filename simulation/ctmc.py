@@ -26,7 +26,7 @@ def create_prism_program_from_log(
 
     file = open(sm_file_path, 'w')
 
-    file.write('ctmc\n\n')
+    file.write('ma\n\n')
 
     n = len(correspondence)-1  # total number of states
 
@@ -101,11 +101,11 @@ def create_prism_program_from_log(
 
     for key in correspondence:
         if key in final_states:
-            file.write('\t <> q = ' + str(correspondence[key]) + ' -> true;\n\n')
+            file.write('\t <> started & q = ' + str(correspondence[key]) + ' -> true;\n\n')
             continue
         # if q is this specific state -> -(then)->
         if key in data_transition_role_frequency:
-            file.write('\t <> q = ' + str(correspondence[key]) + ' -> ')
+            file.write('\t <> started & q = ' + str(correspondence[key]) + ' -> ')
             for key_1 in data_transition_role_frequency[key]:
                 if key_1 == 'end':
                     continue
@@ -122,7 +122,7 @@ def create_prism_program_from_log(
                     else:
                         file.write('0 +')
                 file.write(' 0 : (q\' = ' + str(correspondence[key_1]) + ') + \n')
-            file.write(' true ;\n\n\t')
+            file.write(' 0:true ;\n\n\t')
 
     file.write('\n\nendmodule\n\n')
     # now we have set the transition probabilities

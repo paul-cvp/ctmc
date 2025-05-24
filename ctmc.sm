@@ -1,38 +1,33 @@
-ma //ctmc
+ma
 
 const int N = 2;
+const double R1 = 1;
 
 
 
 module ctest
-	 //Middle : 0
+	 //Start : 0
 	 //End : 1
-	 //Start : 2
+	 //Middle : 2
 
 
 	 q : [0 ..N];
 
 	 started : bool;
 
-	 [] !started -> 1 : (started'=true) & (q'=2);
+	 [] !started -> (1000 / 1.0 * R1) / ((1000 / 1.0 * R1)) : (started'=true) & (q'=0);
 
-	 <> q = 0 & started -> 0.25 : (q' = 1) + 0:true ;
+	 <> started & q = 1 -> true;
 
-	 <> q = 1 & started -> 0:true;
 
-	 <> q = 2 & started -> 0.5*0.25 : (q' = 1) + 0.5*0.25 : (q' = 0) + 0:true ;
 
 endmodule
 
-label "q_terminal_End" = (q =1) & started;
+label "q_terminal_End" = (q =1);
 
 rewards "num"
-    [] !started : 0;
-	[] q = 0 & started : 1;
-	[] q = 1 & started : 0;
-	[] q = 2 & started : 1;
+	[] q = 0 : 1;
+	[] q = 1 : 0;
+	[] q = 2 : 1;
+	
 endrewards
-
-//rewards "time"
-//    true : 1;
-//endrewards
