@@ -7,8 +7,8 @@ const double R1 = 1;
 
 module ctest
 	 //Start : 0
-	 //End : 1
-	 //Middle : 2
+	 //Middle : 1
+	 //End : 2
 
 
 	 q : [0 ..N];
@@ -17,17 +17,24 @@ module ctest
 
 	 [] !started -> (1000 / 1.0 * R1) / ((1000 / 1.0 * R1)) : (started'=true) & (q'=0);
 
-	 <> started & q = 1 -> true;
+	 <> started & q = 0 -> ( 0.24035920856713 * R1/1.0) +  0 : (q' = 2) + 
+( 0.2602934877549088 * R1/1.0) +  0 : (q' = 1) + 
+ 0:true ;
+
+		 <> started & q = 1 -> ( 0.24810879818133708 * R1/1.0) +  0 : (q' = 2) + 
+ 0:true ;
+
+		 <> started & q = 2 -> true;
 
 
 
 endmodule
 
-label "q_terminal_End" = (q =1);
+label "q_terminal_End" = (q =2);
 
 rewards "num"
 	[] q = 0 : 1;
-	[] q = 1 : 0;
-	[] q = 2 : 1;
+	[] q = 1 : 1;
+	[] q = 2 : 0;
 	
 endrewards
