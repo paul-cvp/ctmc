@@ -1,12 +1,12 @@
 ma
 
 const int N = 3;
-const double A2 = 635.4574964281994;
-const double C1 = 4.090192755693689;
-const double D1 = 82.97199973613489;
-const double E1 = 128.14320340943718;
-const double V3 = 930.893752686645;
-const double nan = 200.18189499348807;
+const double A2 = 363;
+const double C1 = 14;
+const double D1 = 79;
+const double E1 = 282;
+const double V3 = 452;
+const double nan = 248;
 
 
 

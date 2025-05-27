@@ -7,12 +7,12 @@ class Timings:
     def __init__(self):
         pass
 
-    def get_timings_per_resource(self, event_log: pd.DataFrame, timing_input_array):
+    def get_timings_per_resource(self, event_log: pd.DataFrame, timing_input_array,time_factor = 1):
         res = {}
 
         for event_resource_pair in timing_input_array:
             filtered_df = self.get_log_with_pair_resource(event_log, event_resource_pair[0], event_resource_pair[1],event_resource_pair[2])
-            data = self.get_delta_between_events_resource(filtered_df, event_resource_pair)
+            data = self.get_delta_between_events_resource(filtered_df, event_resource_pair,time_factor=time_factor)
             data = np.array(data)
             data = data[data>0]
             if len(data) > 1:
@@ -35,14 +35,14 @@ class Timings:
                              & (subset_is_in['org:role'] == resource) )]['case:concept:name'].unique()
         return event_log[event_log['case:concept:name'].isin(cids)].copy(deep=True)
 
-    def get_delta_between_events_resource(self, filtered_df, event_pair):
+    def get_delta_between_events_resource(self, filtered_df, event_pair, time_factor = 1):
         filtered_df['time:timestamp'] = pd.to_datetime(filtered_df['time:timestamp'], utc=True)
         filtered_df = filtered_df[(filtered_df['org:role'] == event_pair[2]) |
                                 (filtered_df['concept:name'] == event_pair[1]) |
                                 (filtered_df['concept:name'] == event_pair[0])].sort_values(['case:concept:name', 'time:timestamp'])
         temp_df = pd.concat([filtered_df, filtered_df.groupby('case:concept:name').shift(-1)
                             .rename({'concept:name': 'concept:name:to', 'time:timestamp': 'time:timestamp:to'}, axis=1)], axis=1)
-        temp_df['delta'] = (temp_df['time:timestamp:to'] - temp_df['time:timestamp']).dt.total_seconds()
+        temp_df['delta'] = (temp_df['time:timestamp:to'] - temp_df['time:timestamp']).dt.total_seconds() * time_factor
         temp_df = temp_df[(temp_df['concept:name'] == event_pair[0]) & (temp_df['concept:name:to'] == event_pair[1])]
         data = temp_df['delta'].values
         return data
@@ -78,7 +78,7 @@ class Timings:
                     resource_input_array.append((e1, e2, resource))
         return resource_input_array
 
-    def extract_imperative_resource_times(self,event_log):
+    def extract_imperative_resource_times(self,event_log,time_factor=1):
         '''
         The difference between this unique way of extracting times is that it requires
         the next event to be in sequence.
@@ -94,9 +94,9 @@ class Timings:
                     time = next_event['time:timestamp'] - event['time:timestamp']
                     key = (event['concept:name'], next_event['concept:name'], next_event['org:role'])
                     if not key in times_dictionary.keys():
-                        times_dictionary[key] = [time.total_seconds()]
+                        times_dictionary[key] = [time.total_seconds() * time_factor]
                     else:
-                        times_dictionary[key].append(time.total_seconds())
+                        times_dictionary[key].append(time.total_seconds() * time_factor)
                 event = next_event
                 first = False
         return times_dictionary
