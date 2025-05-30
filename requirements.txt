@@ -18,7 +18,6 @@ comm==0.2.2
 contourpy==1.3.1
 cvxopt==1.3.2
 cycler==0.12.1
--e git+https://infoventuredk.visualstudio.com/DCR-py/_git/DCR-py@a370ed8c08bb91e6c6464e1b17110e6eb569bd62#egg=dcr_py
 debugpy==1.8.12
 decorator==5.1.1
 defusedxml==0.7.1
