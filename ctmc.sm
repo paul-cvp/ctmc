@@ -1,0 +1,41 @@
+ma
+
+const int N = 2;
+const double Employee = 3.4713626887358644;
+const double Manager = 1.5286373112641356;
+
+
+
+module ctest
+	 //Com : 1
+	 //Acc : 0
+	 //Que : 2
+
+
+	 q : [0 ..N];
+
+	 started : bool;
+
+	 [] !started -> (1000 / 1.5286373112641356 * Manager) / ((1000 / 1.5286373112641356 * Manager)) : (started'=true) & (q'=0);
+
+	 <> started & q = 1 -> true;
+
+	 <> started & q = 0 -> (( 0.24461576562759904 * Manager/1.5286373112641356 * 0.5) + ( 0.23511414130929406 * Employee/3.4713626887358644 * 0.5) +  0) * 0.5 : (q' = 2) + 
+(( 0.25371599343670503 * Employee/3.4713626887358644 * 1.0) +  0) * 0.5 : (q' = 1) + 
+ 0:true ;
+
+		 <> started & q = 2 -> (( 0.2552330965038778 * Employee/3.4713626887358644 * 1.0) +  0) * 1.0 : (q' = 1) + 
+ 0:true ;
+
+	
+
+endmodule
+
+label "q_terminal_Com" = (q =1);
+
+rewards "num"
+	[] q = 1 : 0;
+	[] q = 0 : 1;
+	[] q = 2 : 1;
+	
+endrewards

@@ -45,6 +45,7 @@ inflection==0.5.1
 intervaltree==3.1.0
 ipykernel==6.29.5
 ipython==8.31.0
+ipython_pygments_lexers==1.1.1
 isodate==0.6.1
 isoduration==20.11.0
 jedi==0.19.2
@@ -99,7 +100,7 @@ psycopg-pool==3.2.4
 ptyprocess==0.7.0
 pure_eval==0.2.3
 py4j==0.10.9.7
--e git+https://github.com/moves-rwth/pycarl.git@81b0a21af0f7c23368b3ded8a646f30a7a93b462#egg=pycarl
+pycarl==2.4.0
 pycparser==2.22
 pydotplus==2.0.2
 Pygments==2.19.1
@@ -132,7 +133,7 @@ soupsieve==2.6
 sqlparse==0.4.3
 stack-data==0.6.3
 statsmodels==0.14.4
--e git+https://github.com/moves-rwth/stormpy.git@4e91eb18aa7b48f762176e3b323325a757aff4ec#egg=stormpy
+stormpy==1.9.0
 terminado==0.18.1
 threadpoolctl==3.5.0
 tinycss2==1.4.0
