@@ -2,7 +2,7 @@ import pandas as pd
 from pm4py.objects.log.util import dataframe_utils
 
 def rename_repeating_events(df, epsilon=3, final_states=None):
-    df = dataframe_utils.convert_timestamp_columns_in_df(df)
+    # df = dataframe_utils.convert_timestamp_columns_in_df(df)
     df = df.sort_values(by=["case:concept:name", "time:timestamp"])
 
     updated_final_states = set()

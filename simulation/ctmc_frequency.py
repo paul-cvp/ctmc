@@ -23,6 +23,10 @@ def create_prism_program_from_log(
 
     None of the final states can be labelled as 0
     '''
+    # these are used to adjust the rates based on how likely we are to take the specific rates
+    # basically in the process mining language we combine the frequency of choosing a path with the time it takes to be on that path
+    frequences_total = {}
+    frequences_local = {}
 
     file = open(sm_file_path, 'w')
 
@@ -39,6 +43,11 @@ def create_prism_program_from_log(
 
     for key in correspondence:
         file.write('\t //' + key + ' : ' + str(correspondence[key]) + '\n')
+        # initialize frequencies with 1 so that if used it does not affect the rate.
+        frequences_total[key] = 1
+        frequences_local[key] = {}
+        for k2 in correspondence:
+            frequences_local[key][k2] = 1
     # constants are set
     file.write('\n\n\t q : [0 ..N];') # list of states by numbers based on the correspondence
     file.write('\n\n\t started : bool;') # variable that indicates if we have been initialized
@@ -74,30 +83,30 @@ def create_prism_program_from_log(
     file.write(buffer1)
     # now we are finished with started
 
-    frequences_total = {}
-    # frequences_local = {}
     # here we make transition probabilities (we need it for the rule of three)
     for key in data_transition_role_frequency:
         if key in ['start','end']:
             continue
         # frequences_local[key] = {}
-        frequences_total[key] = {}
+        # frequences_total[key] = {}
         n = 0
         for key_1 in data_transition_role_frequency[key]:
             if key_1 in ['start','end']:
                 continue
-            # m = 0
+            m = 0
             for role in data_transition_role_frequency[key][key_1]:
                 n = n + data_transition_role_frequency[key][key_1][role]
-                # m = m + data_transition_role_frequency[key][key_1][role]
+                m = m + data_transition_role_frequency[key][key_1][role]
             # this tells us that we moved from state key to key_1 m many times
-            # frequences_local[key][key_1] = m
+            if m > 0:
+                frequences_local[key][key_1] = m
         # this tells us that we moved from state key to anywhere n many times
-        frequences_total[key] = n
+        if n > 0:
+            frequences_total[key] = n
 
     if show_print:
-        # print(frequences_local)
-        print(frequences_total)
+        print("local", frequences_local)
+        print("total", frequences_total)
 
     for key in correspondence:
         if key in final_states:
@@ -109,6 +118,7 @@ def create_prism_program_from_log(
             for key_1 in data_transition_role_frequency[key]:
                 if key_1 == 'end':
                     continue
+                file.write('(')
                 for role in data_transition_role_frequency[key][key_1]:
                     if role == 'end':
                         continue
@@ -118,10 +128,14 @@ def create_prism_program_from_log(
                         data_mean_transition_role_time[key][key_1][role]["lambda"] != 0):
                         # again the rule of three
                         #TODO: rename lambda to rate
-                        file.write('( ' + str(data_mean_transition_role_time[key][key_1][role]["lambda"]) + ' * ' + str(role) + '/' + str(data_role_number_of_resources[role]) + ') + ')
+
+                        file.write('( ' + str(data_mean_transition_role_time[key][key_1][role]["lambda"]) + ' * '
+                                   + str(role) + '/' + str(data_role_number_of_resources[role]) + ' * '
+                                   + str(data_transition_role_frequency[key][key_1][role]/frequences_local[key][key_1])
+                                   + ') + ')
                     else:
                         file.write('0 +')
-                file.write(' 0 : (q\' = ' + str(correspondence[key_1]) + ') + \n')
+                file.write(' 0)'+' * ' + str(frequences_local[key][key_1]/frequences_total[key]) + ' : (q\' = ' + str(correspondence[key_1]) + ') + \n')
             file.write(' 0:true ;\n\n\t')
 
     file.write('\n\nendmodule\n\n')
@@ -174,7 +188,7 @@ def create_prism_program_from_log(
             final_probabilities[key][key_1] = final_probabilities[key][key_1] / total
 
     if show_print:
-        print(final_probabilities)
+        print('final probabilities',final_probabilities)
 
     return final_probabilities
 
