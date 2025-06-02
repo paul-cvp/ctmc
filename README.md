@@ -2,19 +2,7 @@
 
 Code for the paper `Submission 94: A Novel Approach to Resource Allocation: Discovering Markovian Models from Event Logs`
 
-## To run the evaluation scripts
-
-Go to: https://obscure-adventure-xrgrrrp457w3px4p.github.dev/
-
-## Evaluation
-
-The notebook `synthetic.ipynb` contains the synthetic log evaluation.
-
-The notebook `bpic13.ipynb` contains the real event log evaluation.
-
-Hint: Listen to the `#TODOs` and change values to play around with the estimations. Enjoy!
-
-## Local Installation (Optional)
+## Local Installation
 
 You must have python and the Storm model checker installed on your machine.
 
@@ -25,3 +13,13 @@ Link to Storm: https://www.stormchecker.org/getting-started.html
 Install the `requirements.txt` with `pip install -r requirements.txt` after you have created a virtual environment.
 
 Optional link to stormpy (will be installed when you install the `requirements.txt` file): https://moves-rwth.github.io/stormpy/installation.html
+
+## Evaluation
+
+The notebook `synthetic.ipynb` contains the synthetic log evaluation.
+
+The notebook `bpic13.ipynb` contains the real event log evaluation.
+
+Hint: Listen to the `#TODOs` and change values to play around with the estimations. Enjoy!
+
+Note: If there are issues running the notebooks locally, please keep in mind that the current state of the notebooks already has the outputs visible directly in the browser.
